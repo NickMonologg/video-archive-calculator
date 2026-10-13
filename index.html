@@ -517,6 +517,21 @@ load-card summary .load-caption{font-size:16px}
 .storage-details-simple p{font-size:10px;line-height:1.6;color:#bca4d0;margin:15px 0 3px}
 @media(max-width:560px){.storage-variant-value{font-size:20px}.storage-variant-text strong{font-size:13px}.storage-variant-text small{font-size:10px}.storage-variants-footnote{font-size:10px}}
 @media(max-width:350px){.storage-variant-value{font-size:18px}.storage-variant{gap:8px}}
+
+/* Читаемость на смартфонах — шрифты крупнее без изменения десктопной версии. */
+@media screen and (max-width: 560px) {
+  body { font-size: 17px; }
+  .section-heading h2 { font-size: 22px; }
+  .section-heading p { font-size: 16px; line-height: 1.45; }
+  .field, .reserve-line label, .period-options .period-field-title { font-size: 16px; line-height: 1.4; }
+  .field small, .group-subline, .small-note, .reserve-line p { font-size: 14px; line-height: 1.5; }
+  button, input, select, .field > input, .field > select,
+  .input-unit > input, .stepper input { font-size: 16px; }
+  .group-name { font-size: 17px; }
+  .period-options > .field { min-width: 0; }
+  .period-options .period-field-title { overflow-wrap: break-word; }
+  /* Не увеличиваем цифру итогового результата и её единицу измерения. */
+}
 </style>
   
   
@@ -936,7 +951,7 @@ load-card summary .load-caption{font-size:16px}
     return nf(n, 0) + ' ' + (m >= 11 && m <= 14 ? 'камер' : k === 1 ? 'камера' : k >= 2 && k <= 4 ? 'камеры' : 'камер');
   };
   const volumeText = (tb, digits = 2) => tb >= 1 ? `${nf(tb, digits)} ТБ` : `${nf(tb * 1000, digits)} ГБ`;
-  let state = C.defaults(), result, undoState, toastTimer;
+  let state = {...C.defaults(), groups: []}, result, undoState, toastTimer;
   let savedCalculations = []; // snapshots, never modified by live edits
   let expandedGroups = new Set();
   const collapsedGroups = new Set();
@@ -1161,7 +1176,7 @@ load-card summary .load-caption{font-size:16px}
       $('group-total-' + g.id).textContent = r ? volumeText(r.dailyTB) + ' / сутки' : '';
     }
     if (!valid) {
-      $('invalid-message').textContent = emptyState ? 'Калькулятор очищен. Добавьте группу камер, чтобы получить новый расчёт.' : (Object.values(result.errors)[0] || 'Проверьте значения в форме.');
+      $('invalid-message').textContent = emptyState ? 'Добавьте первую группу камер, чтобы получить расчёт объёма архива.' : (Object.values(result.errors)[0] || 'Проверьте значения в форме.');
       $('result-chip').textContent = emptyState ? 'Нет камер' : 'Проверьте параметры';
       save(); return;
     }
@@ -1700,14 +1715,12 @@ load-card summary .load-caption{font-size:16px}
       if (shared) { state = shared; expandedGroups.clear(); collapsedGroups.clear(); syncControls(); renderGroups(); update(); toast('Расчёт загружен из ссылки'); }
     } catch { toast('Не удалось прочитать расчёт из ссылки'); }
   });
+  // Каждый обычный вход открывает пустой калькулятор. Сохранённые проекты
+  // доступны отдельно через историю. Ссылка с параметрами — явное исключение.
   try {
     const shared = decodeHash();
     if (shared) state = shared;
-    else {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) state = sanitize(JSON.parse(saved));
-    }
-  } catch { toast('Начали с нового расчёта: сохранённые данные не прочитаны'); }
+  } catch { toast('Не удалось прочитать расчёт из ссылки'); }
   
   savedCalculations = loadHistory();
   syncControls(); renderGroups(); update(); renderHistory();
