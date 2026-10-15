@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#17092e">
   <meta name="description" content="Рассчитайте объём видеоархива и необходимую ёмкость хранилища. Группы камер, кодеки, запись по движению и сроки хранения.">
-  <title>Калькулятор видеоархива — расчёт объёма хранения</title>
+  <title>Видеоархив</title>
   <style>
 @font-face {
   font-family: 'Manrope';
@@ -615,7 +615,7 @@ load-card summary .load-caption{font-size:16px}
   .nav-button:first-child > .icon { display: none; }
   .intro { padding: 30px 0 24px; }
   .intro h1 {
-    font-size: clamp(36px, 10.4vw, 46px);
+    font-size: clamp(36px, 10.4vw, 40px);
     line-height: 1.12;
     letter-spacing: -1.7px;
     font-weight: 800;
@@ -832,13 +832,12 @@ load-card summary .load-caption{font-size:16px}
   <a class="skip-link" href="#calculator">Перейти к расчёту</a>
   <div class="app-shell">
     <header class="topbar">
-      <a class="wordmark" href="#calculator" aria-label="Калькулятор видеоархива — главная"><span class="brand-symbol"><svg class="icon"><use href="#i-camera"/></svg></span><span>ВИДЕО<span class="brand-light">АРХИВ</span></span><span class="brand-caption">Калькулятор</span></a>
+      <a class="wordmark" href="#calculator" aria-label="Видеоархив — главная"><span class="brand-symbol"><svg class="icon"><use href="#i-camera"/></svg></span><span>ВИДЕО<span class="brand-light">АРХИВ</span></span></a>
       <div class="header-actions"><button id="reset" class="nav-button"><svg class="icon small"><use href="#i-reset"/></svg> Сбросить</button></div>
     </header>
     <main id="calculator">
       <section class="intro">
-        <div><h1>Калькулятор <span>видеоархива</span></h1><p>Объём архива и срок хранения.</p></div>
-        
+        <div><h1>Калькулятор <span>видеоархива</span></h1></div>
       </section>
       <label class="field project-field">Проект <input id="project" data-setting="project" maxlength="120" placeholder="Например, склад в Петербурге"></label>
       <div class="mode-bar" role="tablist" aria-label="Режим расчёта">
@@ -971,14 +970,6 @@ load-card summary .load-caption{font-size:16px}
         <p id="history-empty" class="history-empty">Ваши расчёты появятся здесь после нажатия «Сохранить».</p>
         <div class="table-scroll" id="history-scroll" hidden><table class="history-table"><thead><tr><th>Дата</th><th>Проект / объект</th><th>Камер</th><th>Режим</th><th>Результат</th><th>Действия</th></tr></thead><tbody id="history-rows"></tbody></table></div>
       </section>
-      <details class="method-panel" id="methodology"><summary><span>Как устроен расчёт</span><svg class="icon small"><use href="#i-chevron"/></svg></summary>
-        <div class="method-body"><div><h3>Видеоархив</h3>
-          <p>Мбит/с × количество камер × часы записи × 3600 × дни ÷ 8 000 000 = ТБ видеозаписей. Для записи по движению учитывается заданный процент активности, аудиопоток добавляется отдельно. Срок группы может отличаться от общего.</p>
-          <p>Битрейт подставляется из встроенной таблицы. Для отсутствующих сочетаний применяется приблизительная оценка; поток можно задать вручную. При вводе «4» используется 4096 кбит/с.</p></div>
-          <div><h3>Необходимая ёмкость</h3>
-          <p>Объём архива с запасом на рост делится на 0,95 для обычных дисков или на 0,993 для полезной ёмкости RAID. Это условные резервы 5% и 0,7% соответственно. Для RAID здесь не подсчитываются диски для зеркалирования, чётности или горячего резерва.</p>
-          <p>Пример: 31,85 ТБ архива → обычные диски ≈33,53 ТБ, полезная ёмкость RAID ≈32,07 ТБ. Небольшое отличие от других калькуляторов возможно из-за округления исходного объёма.</p>
-          <p>В режиме «На сколько хватит дисков» ёмкость и количество уже установленных HDD задаются вручную. Для этого режима применяется резерв 5%, без RAID.</p></div></div></details>
     </main>
     
   </div>
@@ -1226,7 +1217,8 @@ load-card summary .load-caption{font-size:16px}
     const m = n % 100, k = n % 10;
     return nf(n, 0) + ' ' + (m >= 11 && m <= 14 ? 'камер' : k === 1 ? 'камера' : k >= 2 && k <= 4 ? 'камеры' : 'камер');
   };
-  const volumeText = (tb, digits = 2) => tb >= 1 ? `${nf(tb, digits)} ТБ` : `${nf(tb * 1000, digits)} ГБ`;
+  const volumeNumber = (tb, digits = 2) => nf(tb, tb > 0 && tb < .01 ? Math.min(6, Math.max(digits, Math.ceil(-Math.log10(tb)) + 1)) : digits);
+  const volumeText = (tb, digits = 2) => `${volumeNumber(tb, digits)} ТБ`;
   let state = {...C.defaults(), groups: []}, result, undoState, toastTimer;
   let savedCalculations = []; // snapshots, never modified by live edits
   let expandedGroups = new Set();
@@ -1299,8 +1291,8 @@ load-card summary .load-caption{font-size:16px}
   const groupSelect = (g, key, label, choices) => `<label class="field"><span class="field-title">${esc(label)}</span><select data-group="${g.id}" data-key="${key}" aria-label="${esc(label)}, ${esc(g.name)}">${choices.map(([v, l]) => option(v, l, g[key])).join('')}</select></label>`;
   function renderGroups() {
     if (!state.groups.length) {
-      $('groups').innerHTML = '<div class="empty-groups" role="status"><strong>Добавьте камеры</strong><p>Одинаковые камеры можно объединить в группу.</p></div>';
-      $('add-group').textContent = '+ Добавить группу';
+      $('groups').replaceChildren();
+      $('add-group').innerHTML = `${icon('plus')} Добавить группу`;
       $('add-group').disabled = false;
       return;
     }
@@ -1425,7 +1417,7 @@ load-card summary .load-caption{font-size:16px}
     $('warnings').innerHTML = '';
     const emptyState = state.groups.length === 0;
     $('result-card').classList.toggle('is-empty', emptyState);
-    $('invalid-title').textContent = emptyState ? 'Готовы к расчёту?' : 'Уточните параметры';
+    $('invalid-title').textContent = emptyState ? 'Введите данные' : 'Уточните параметры';
     $('start-groups').hidden = !emptyState;
     $('codec-panel').hidden = emptyState;
     if (emptyState) $('error-groups').textContent = '';
@@ -1454,7 +1446,7 @@ load-card summary .load-caption{font-size:16px}
       $('group-total-' + g.id).textContent = r ? volumeText(r.dailyTB) + ' / сутки' : '';
     }
     if (!valid) {
-      $('invalid-message').textContent = emptyState ? 'Укажите параметры камер — результат появится здесь.' : (Object.values(result.errors)[0] || 'Проверьте значения в форме.');
+      $('invalid-message').textContent = emptyState ? 'Укажите параметры камер.' : (Object.values(result.errors)[0] || 'Проверьте значения в форме.');
       $('result-chip').textContent = emptyState ? 'Нет камер' : 'Проверьте параметры';
       save(); return;
     }
@@ -1477,8 +1469,8 @@ load-card summary .load-caption{font-size:16px}
     $('storage-raid-note').title = growthReserve > 0
       ? `Сначала к объёму видео добавляется ${pctLabel} запаса на рост, затем учитывается резерв 0,7% под файловую систему массива.`
       : 'Резерв 0,7% под файловую систему массива.';
-    $('storage-ordinary').textContent = nf(neededVideoTB / .95) + ' ТБ';
-    $('storage-raid').textContent = nf(neededVideoTB / .993) + ' ТБ';
+    $('storage-ordinary').textContent = volumeText(neededVideoTB / .95);
+    $('storage-raid').textContent = volumeText(neededVideoTB / .993);
     $('storage-pure').textContent = volumeText(result.videoTB);
     $('storage-reserve').textContent = volumeText(result.videoTB * result.reserve / 100);
     $('storage-total').textContent = volumeText(reverse ? result.plannedTB : neededVideoTB);
@@ -1487,7 +1479,7 @@ load-card summary .load-caption{font-size:16px}
     $('result-chip').textContent = reverse ? camerasText(result.cameras) : result.mixedDays ? 'Разные сроки хранения' : `${state.days} дней архива`;
     $('result-label').textContent = reverse ? 'Архив на этих дисках' : result.reserve === 0 ? 'Объём видеоархива' : 'Объём архива с запасом';
     const subDay = reverse && result.plannedDays < 1;
-    const primary = reverse ? (subDay ? (result.retentionDays * 24 < 0.1 ? '< 0,1' : nf(Math.floor(result.retentionDays*240)/10,1)) : nf(result.plannedDays, 0)) : nf(result.targetTB);
+    const primary = reverse ? (subDay ? (result.retentionDays * 24 < 0.1 ? '< 0,1' : nf(Math.floor(result.retentionDays*240)/10,1)) : nf(result.plannedDays, 0)) : volumeNumber(result.targetTB);
     $('result-number').textContent = primary;
     $('result-unit').textContent = reverse ? (subDay ? 'ч' : 'дней') : 'ТБ';
     const value = $('result-number').parentElement;
@@ -1513,7 +1505,7 @@ load-card summary .load-caption{font-size:16px}
     $('bar-video').style.width = videoPct + '%';
     $('bar-reserve').style.width = reservePct + '%';
     $('bar-free').style.width = Math.max(0, 100 - videoPct - reservePct) + '%';
-    $('capacity-bar').setAttribute('aria-label', `Из ${nf(result.availableTB)} ТБ: видео ${nf(result.videoTB)} ТБ, запас ${nf(result.videoTB * result.reserve / 100)} ТБ, свободно ${nf(Math.max(0, result.availableTB - result.plannedTB))} ТБ`);
+    $('capacity-bar').setAttribute('aria-label', `Из ${volumeText(result.availableTB)}: видео ${volumeText(result.videoTB)}, запас ${volumeText(result.videoTB * result.reserve / 100)}, свободно ${volumeText(Math.max(0, result.availableTB - result.plannedTB))}`);
     $('metric-required-label').textContent = result.raidActive ? 'После RAID, до резервов' : 'Ёмкость HDD до резервов';
     $('metric-required').textContent = volumeText(result.raidTB);
     const fsPct = C.numeric(state.fs);
@@ -1536,7 +1528,7 @@ load-card summary .load-caption{font-size:16px}
     $('success-text').textContent = reverse ? '' : result.mixedDays ? 'Хватит на все заданные сроки'
       : `Хватит на ${nf(wholeDays, 0)} полных дней${result.reserve ? ` · запас ${nf(result.reserve)}%` : ''}`;
     $('result-success').hidden = true;
-    $('mobile-value').textContent = reverse ? durationText(result) : `${nf(result.targetTB)} ТБ`;
+    $('mobile-value').textContent = reverse ? durationText(result) : volumeText(result.targetTB);
     $('mobile-caption').textContent = 'К результату ↑';
     renderOverview();
     $('load-number').textContent = nf(result.annualLoadTB) + ' ТБ/год';
@@ -1878,9 +1870,9 @@ load-card summary .load-caption{font-size:16px}
       const date = new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(entry.at));
       const cameras = r.valid ? nf(r.cameras,0) : '—';
       const mode = entry.state.mode === 'volume' ? `${entry.state.days} дн.` : 'По ёмкости';
-      const calculated = r.valid ? (entry.state.mode === 'volume' ? `${nf(r.targetTB)} ТБ` : `${nf(r.plannedDays,0)} дн.`) : 'Нужно уточнить';
+      const calculated = r.valid ? (entry.state.mode === 'volume' ? volumeText(r.targetTB) : `${nf(r.plannedDays,0)} дн.`) : 'Нужно уточнить';
       const project = entry.state.project.trim() || `Расчёт ${date}`;
-      return `<tr><td class="history-date">${esc(date)}</td><td><strong>${esc(project)}</strong><small>${r.valid ? (entry.state.mode === 'volume' ? `Обычные диски: ${nf(r.targetTB/.95)} ТБ · RAID: ${nf(r.targetTB/.993)} ТБ` : `${nf(r.totalCount,0)} × ${nf(r.disk)} ТБ`) : 'Настройки сохранены'}</small></td><td>${cameras}</td><td>${esc(mode)}</td><td><strong>${calculated}</strong></td><td><div class="history-actions"><button type="button" data-history-open="${esc(entry.id)}" aria-label="Загрузить расчёт">Открыть</button><button type="button" data-history-delete="${esc(entry.id)}" class="history-delete" aria-label="Удалить расчёт">Удалить</button></div></td></tr>`;
+      return `<tr><td class="history-date">${esc(date)}</td><td><strong>${esc(project)}</strong><small>${r.valid ? (entry.state.mode === 'volume' ? `Обычные диски: ${volumeText(r.targetTB/.95)} · RAID: ${volumeText(r.targetTB/.993)}` : `${nf(r.totalCount,0)} × ${nf(r.disk)} ТБ`) : 'Настройки сохранены'}</small></td><td>${cameras}</td><td>${esc(mode)}</td><td><strong>${calculated}</strong></td><td><div class="history-actions"><button type="button" data-history-open="${esc(entry.id)}" aria-label="Загрузить расчёт">Открыть</button><button type="button" data-history-delete="${esc(entry.id)}" class="history-delete" aria-label="Удалить расчёт">Удалить</button></div></td></tr>`;
     }).join('');
   }
   function snapshotCurrent() {
@@ -1926,7 +1918,7 @@ load-card summary .load-caption{font-size:16px}
 
     if (result.warnings.length) lines.push('', 'ПРОВЕРЬТЕ: ' + result.warnings.join(' '));
     lines.push('', 'Рекомендуемый битрейт: табличное значение для поддерживаемых сочетаний, приближённая оценка для остальных. Битрейт уже включает сцену, повторно не корректируется. Ввод 4 = 4096 кбит/с.',
-      '1 ТБ = 10¹² байт; 1 ГБ = 10⁹ байт. Сеть: без транспортных накладных расходов.');
+      '1 ТБ = 10¹² байт. Сеть: без транспортных накладных расходов.');
     return lines.join('\n');
   }
   async function copyText(text, success) {
