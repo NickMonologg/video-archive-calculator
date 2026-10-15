@@ -1325,7 +1325,7 @@ load-card summary .load-caption{font-size:16px}
       $('undo').disabled = true;
       undoState = undefined; undoHistory = undefined;
       toastHideTimer = setTimeout(() => { $('toast').hidden = true; }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220);
-    }, undo ? 1500 : 1300);
+    }, undo ? 1500 : 1500);
   }
   const option = (value, label, selected) => `<option value="${esc(value)}"${String(value) === String(selected) ? ' selected' : ''}>${esc(label)}</option>`;
   const groupInput = (g, key, label, unit, extra = '') => `<label class="field"><span class="field-title">${esc(label)}</span><div class="input-unit"><input type="text" inputmode="${key === 'retention' ? 'numeric' : 'decimal'}" data-group="${g.id}" data-key="${key}" value="${esc(g[key])}" aria-label="${esc(label)}, ${esc(g.name)}" ${extra}><span>${esc(unit)}</span></div></label>`;
