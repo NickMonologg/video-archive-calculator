@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#17092e">
   <meta name="description" content="Рассчитайте объём видеоархива и необходимую ёмкость хранилища. Группы камер, кодеки, запись по движению и сроки хранения.">
-  <title>Видеоархив</title>
+  <title>Калькулятор видеоархива</title>
   <style>
 @font-face {
   font-family: 'Manrope';
@@ -173,6 +173,9 @@
 
 /* Compact workflow and clear hardware constraints. */
 .intro{padding:28px 0 22px}.intro h1{font-size:46px;letter-spacing:-1.7px}.intro p{font-size:18px}
+.wordmark h1{font:inherit;line-height:1.2;letter-spacing:inherit;white-space:nowrap;margin:0}
+.wordmark h1 span{color:inherit}
+#calculator{padding-top:24px}
 .project-field{max-width:580px;margin:0 0 22px}.project-field input{background:white}
 .reserve-presets{margin-top:14px}.period-options{border-top:1px solid var(--line);padding-top:18px}.period-options+.reserve-presets{justify-content:flex-end}.reserve-presets button{min-width:64px}
 
@@ -608,6 +611,7 @@ load-card summary .load-caption{font-size:16px}
     border-radius: 16px;
   }
   .wordmark { font-size: 16px; gap: 9px; letter-spacing: -.35px; }
+  .wordmark h1 .brand-light { display: block; }
   .brand-symbol { width: 34px; height: 34px; border-radius: 10px; }
   .brand-symbol .icon { width: 21px; height: 21px; }
   .header-actions { margin-left: auto; }
@@ -615,7 +619,7 @@ load-card summary .load-caption{font-size:16px}
   .nav-button:first-child > .icon { display: none; }
   .intro { padding: 30px 0 24px; }
   .intro h1 {
-    font-size: clamp(36px, 10.4vw, 40px);
+    font-size: clamp(36px, 10.4vw, 46px);
     line-height: 1.12;
     letter-spacing: -1.7px;
     font-weight: 800;
@@ -832,13 +836,10 @@ load-card summary .load-caption{font-size:16px}
   <a class="skip-link" href="#calculator">Перейти к расчёту</a>
   <div class="app-shell">
     <header class="topbar">
-      <a class="wordmark" href="#calculator" aria-label="Видеоархив — главная"><span class="brand-symbol"><svg class="icon"><use href="#i-camera"/></svg></span><span>ВИДЕО<span class="brand-light">АРХИВ</span></span></a>
+      <a class="wordmark" href="#calculator" aria-label="Калькулятор видеоархива — главная"><span class="brand-symbol"><svg class="icon"><use href="#i-camera"/></svg></span><h1>Калькулятор <span class="brand-light">видеоархива</span></h1></a>
       <div class="header-actions"><button id="reset" class="nav-button"><svg class="icon small"><use href="#i-reset"/></svg> Сбросить</button></div>
     </header>
     <main id="calculator">
-      <section class="intro">
-        <div><h1>Калькулятор <span>видеоархива</span></h1></div>
-      </section>
       <label class="field project-field">Проект <input id="project" data-setting="project" maxlength="120" placeholder="Например, склад в Петербурге"></label>
       <div class="mode-bar" role="tablist" aria-label="Режим расчёта">
         <button id="mode-volume" class="mode-tab active" role="tab" aria-selected="true" aria-controls="period-panel" data-mode="volume"><svg class="icon"><use href="#i-disk"/></svg><span>Объём архива</span></button>
