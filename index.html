@@ -213,6 +213,26 @@ load-card summary .load-caption{font-size:16px}
 .history-heading>div:nth-child(2){flex:1}.history-tools{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0 0 12px}.history-tool-buttons{display:flex;gap:8px;flex-wrap:wrap}
 .history-tools p{margin:0;color:#776581;font-size:13px}.history-clear{border:1px solid var(--line);background:#fff;color:#6c547b;border-radius:8px;padding:9px 12px;font-size:13px;white-space:nowrap}.history-clear:hover{background:#f7f3ff}
 .history-empty{padding:24px;border:1px dashed #d9c9e8;border-radius:12px;background:#fbf9fe;color:#756583;font-size:14px;text-align:center;margin:0}
+.history-body{display:flow-root}
+.toast{width:max-content;opacity:0;pointer-events:none;transition:opacity .22s ease,translate .22s ease;translate:0 8px}
+.toast.is-visible{opacity:1;pointer-events:auto;translate:0 0}
+.confirm-dialog{width:420px;padding:26px;border-radius:22px}
+.confirm-dialog[open]{animation:confirm-dialog-in .18s ease-out}
+.confirm-dialog::backdrop{background:#170c3670;backdrop-filter:blur(6px)}
+.confirm-dialog-top{display:flex;align-items:center;justify-content:space-between}
+.confirm-dialog-symbol{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:var(--lavender);color:var(--purple)}
+.confirm-dialog .icon-button{min-width:44px;min-height:44px;font-size:26px;border-radius:10px}
+.confirm-dialog h2{margin:20px 0 10px;font-size:25px;line-height:1.25;letter-spacing:-.5px}
+.confirm-dialog p{margin:0;color:#62516f;font-size:16px;line-height:1.6}
+.confirm-dialog-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;padding:14px 16px;background:#f6f2fc;border:1px solid var(--line);border-radius:12px;font-size:15px;color:#62516f}
+.confirm-dialog-summary strong{font-size:16px;color:var(--ink)}
+.confirm-dialog-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:24px}
+.confirm-dialog-actions button{min-height:48px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:white;font-size:16px;font-weight:600}
+.confirm-dialog-actions button:hover{background:#f6f2fc}
+.confirm-dialog-actions .confirm-clear{border-color:var(--purple);background:var(--purple);color:white}
+.confirm-dialog-actions .confirm-clear:hover{background:#6130d4;border-color:#6130d4}
+@keyframes confirm-dialog-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.confirm-dialog[open]{animation:none}}
 .history-date{white-space:nowrap;color:#7b6d86;font-variant-numeric:tabular-nums}.history-table td strong{font-weight:600}.history-table td small{font-size:11px;color:#887895;display:block;margin-top:4px}
 .history-actions{display:flex;flex-wrap:wrap;gap:7px}.history-actions button{border:1px solid #dac7f2;background:#f8f4ff;color:#6a35c3;padding:7px 11px;border-radius:8px;font-size:12px;white-space:nowrap}.history-actions button:hover{background:#ece4ff}
 .history-actions .history-delete{color:#a03b52;background:#fff;border-color:#f0c8d2}.history-actions .history-delete:hover{background:#fff4f6}
@@ -855,7 +875,7 @@ load-card summary .load-caption{font-size:16px}
               <label class="field"><span class="period-field-title">Запись в сутки</span><div class="input-unit"><input id="hours" data-setting="hours" type="text" inputmode="decimal" value="24" aria-describedby="hours-hint"><span>ч</span></div><small id="hours-hint">От 0 до 24 часов</small></label>
               <label class="field"><span class="period-field-title">Запас ёмкости</span><div class="input-unit"><input id="reserve" data-setting="reserve" type="text" inputmode="decimal" value="0"><span>%</span></div><small>На рост и пики потока</small></label>
             </div>
-            <div class="presets reserve-presets" aria-label="Быстрый выбор запаса"><button data-reserve="0">0%</button><button data-reserve="10">10%</button><button data-reserve="20">20%</button><button data-reserve="30">30%</button></div>
+            <div class="presets reserve-presets" aria-label="Быстрый выбор запаса"><button data-reserve="5">5%</button><button data-reserve="10">10%</button><button data-reserve="15">15%</button><button data-reserve="20">20%</button></div>
             <p class="field-error" id="error-hours"></p><p class="field-error" id="error-reserve"></p>
             <p class="field-error" id="error-days"></p><p class="field-error" id="error-driveCount"></p>
           </section>
@@ -966,10 +986,12 @@ load-card summary .load-caption{font-size:16px}
         <p class="overview-caption" id="overview-caption">В таблице показан расчётный объём архива с учётом выбранного запаса.</p>
       </section>
       <section class="panel history-panel" id="history-panel" aria-labelledby="history-title">
-        <div class="section-heading history-heading"><div class="heading-icon"><svg class="icon"><use href="#i-calendar"/></svg></div><div><h2 id="history-title">Сохранённые расчёты</h2><p hidden>Сохранённые версии расчёта</p></div><span class="count-badge" id="history-count">0 расчётов</span></div>
+        <div class="history-body" id="history-body">
+        <div class="section-heading history-heading"><div class="heading-icon"><svg class="icon"><use href="#i-calendar"/></svg></div><div><h2 id="history-title" tabindex="-1">Сохранённые расчёты</h2><p hidden>Сохранённые версии расчёта</p></div><span class="count-badge" id="history-count">0 расчётов</span></div>
         <div class="history-tools"><p>Сохраняются в этом браузере.</p><div class="history-tool-buttons"><button type="button" id="export-history" class="history-clear" disabled>Экспорт CSV</button><button type="button" id="clear-history" class="history-clear" disabled>Очистить историю</button></div></div>
         <p id="history-empty" class="history-empty">Ваши расчёты появятся здесь после нажатия «Сохранить».</p>
         <div class="table-scroll" id="history-scroll" hidden><table class="history-table"><thead><tr><th>Дата</th><th>Проект / объект</th><th>Камер</th><th>Режим</th><th>Результат</th><th>Действия</th></tr></thead><tbody id="history-rows"></tbody></table></div>
+        </div>
       </section>
     </main>
     
@@ -978,6 +1000,13 @@ load-card summary .load-caption{font-size:16px}
   <section id="print-report" class="print-report"></section>
   <div id="toast" class="toast" role="status" hidden><span id="toast-text"></span><button id="undo" hidden>Отменить</button></div>
   <dialog id="copy-dialog"><div class="dialog-heading"><h2>Ваш расчёт</h2><button id="close-dialog" class="icon-button" aria-label="Закрыть">×</button></div><p>Выделите и скопируйте текст.</p><textarea id="copy-text" readonly aria-label="Текст для копирования"></textarea></dialog>
+  <dialog id="clear-history-dialog" class="confirm-dialog" aria-labelledby="clear-history-title" aria-describedby="clear-history-description">
+    <div class="confirm-dialog-top"><span class="confirm-dialog-symbol"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></span><button type="button" id="close-clear-history" class="icon-button" aria-label="Закрыть">×</button></div>
+    <h2 id="clear-history-title">Очистить историю?</h2>
+    <p id="clear-history-description">Удалим сохранённые расчёты. Текущий расчёт останется на странице.</p>
+    <div class="confirm-dialog-summary"><span>В истории</span><strong id="clear-history-count"></strong></div>
+    <div class="confirm-dialog-actions"><button type="button" id="cancel-clear-history" autofocus>Отмена</button><button type="button" id="confirm-clear-history" class="confirm-clear">Очистить</button></div>
+  </dialog>
   <noscript><div class="noscript">Для расчёта включите JavaScript в браузере.</div></noscript>
 <script>
 (function (root) {
@@ -1220,7 +1249,7 @@ load-card summary .load-caption{font-size:16px}
   };
   const volumeNumber = (tb, digits = 2) => nf(tb, tb > 0 && tb < .01 ? Math.min(6, Math.max(digits, Math.ceil(-Math.log10(tb)) + 1)) : digits);
   const volumeText = (tb, digits = 2) => `${volumeNumber(tb, digits)} ТБ`;
-  let state = {...C.defaults(), groups: []}, result, undoState, toastTimer;
+  let state = {...C.defaults(), groups: []}, result, undoState, undoHistory, toastTimer, toastHideTimer, historyAnimation;
   let savedCalculations = []; // snapshots, never modified by live edits
   let expandedGroups = new Set();
   const collapsedGroups = new Set();
@@ -1282,10 +1311,21 @@ load-card summary .load-caption{font-size:16px}
   }
   function toast(message, undo = false) {
     clearTimeout(toastTimer);
+    clearTimeout(toastHideTimer);
     $('toast-text').textContent = message;
     $('undo').hidden = !undo;
+    $('undo').disabled = false;
+    if (!undo) { undoState = undefined; undoHistory = undefined; }
+    $('toast').classList.remove('is-visible');
     $('toast').hidden = false;
-    toastTimer = setTimeout(() => { $('toast').hidden = true; undoState = undefined; }, undo ? 9000 : 4500);
+    void $('toast').offsetWidth;
+    $('toast').classList.add('is-visible');
+    toastTimer = setTimeout(() => {
+      $('toast').classList.remove('is-visible');
+      $('undo').disabled = true;
+      undoState = undefined; undoHistory = undefined;
+      toastHideTimer = setTimeout(() => { $('toast').hidden = true; }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220);
+    }, undo ? 1500 : 1300);
   }
   const option = (value, label, selected) => `<option value="${esc(value)}"${String(value) === String(selected) ? ' selected' : ''}>${esc(label)}</option>`;
   const groupInput = (g, key, label, unit, extra = '') => `<label class="field"><span class="field-title">${esc(label)}</span><div class="input-unit"><input type="text" inputmode="${key === 'retention' ? 'numeric' : 'decimal'}" data-group="${g.id}" data-key="${key}" value="${esc(g[key])}" aria-label="${esc(label)}, ${esc(g.name)}" ${extra}><span>${esc(unit)}</span></div></label>`;
@@ -1725,6 +1765,7 @@ load-card summary .load-caption{font-size:16px}
       $('groups').querySelector(`[data-group="${newId}"][data-key="name"]`).focus();
     }
     if (button.dataset.delete && state.groups.length > 1) {
+      undoHistory = undefined;
       undoState = JSON.parse(JSON.stringify(state));
       const index = state.groups.findIndex(g => g.id === Number(button.dataset.delete));
       state.groups.splice(index, 1); changed(true); toast('Группа удалена', true);
@@ -1755,6 +1796,7 @@ load-card summary .load-caption{font-size:16px}
   });
 
   function resetCalculation() {
+    undoHistory = undefined;
     undoState = JSON.parse(JSON.stringify(state));
     state = {...C.defaults(), groups: []};
     expandedGroups.clear(); collapsedGroups.clear(); clearHash();
@@ -1764,11 +1806,20 @@ load-card summary .load-caption{font-size:16px}
     syncControls(); renderGroups(); update();
     window.scrollTo({top:0,behavior:'instant'});
     $('mode-volume').focus({preventScroll:true});
-    toast('Исходные данные очищены', true);
+    toast('Расчёт сброшен', true);
   }
   $('reset').addEventListener('click', resetCalculation);
   $('reset-calculation').addEventListener('click', resetCalculation);
   $('undo').addEventListener('click', () => {
+    if (undoHistory) {
+      const current = savedCalculations;
+      savedCalculations = undoHistory;
+      if (!persistHistory()) { savedCalculations = current; return; }
+      undoHistory = undefined;
+      renderHistory(true);
+      toast('История восстановлена');
+      return;
+    }
     if (!undoState) return;
     state = undoState; undoState = undefined; clearHash(); syncControls(); renderGroups(); update(); toast('Изменение отменено');
   });
@@ -1859,9 +1910,19 @@ load-card summary .load-caption{font-size:16px}
     try { localStorage.setItem(historyKey, JSON.stringify(savedCalculations)); return true; }
     catch { toast('Не удалось записать историю в браузере'); return false; }
   }
-  function renderHistory() {
+  function historyCountText(n) {
+    const m = n % 100, k = n % 10;
+    return `${nf(n,0)} ${m >= 11 && m <= 14 ? 'расчётов' : k === 1 ? 'расчёт' : k >= 2 && k <= 4 ? 'расчёта' : 'расчётов'}`;
+  }
+  function renderHistory(animate = false) {
+    const panel = $('history-panel');
+    const oldHeight = panel.getBoundingClientRect().height;
+    historyAnimation?.cancel(); historyAnimation = undefined;
+    panel.style.height = ''; panel.style.overflow = '';
+    const smooth = animate && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (smooth) { panel.style.height = oldHeight + 'px'; panel.style.overflow = 'hidden'; }
     $('history-panel').classList.toggle('is-empty', savedCalculations.length === 0);
-    $('history-count').textContent = `${savedCalculations.length} ${savedCalculations.length === 1 ? 'расчёт' : 'расчётов'}`;
+    $('history-count').textContent = historyCountText(savedCalculations.length);
     $('history-empty').hidden = savedCalculations.length > 0;
     $('history-scroll').hidden = savedCalculations.length === 0;
     $('clear-history').disabled = savedCalculations.length === 0;
@@ -1875,6 +1936,18 @@ load-card summary .load-caption{font-size:16px}
       const project = entry.state.project.trim() || `Расчёт ${date}`;
       return `<tr><td class="history-date">${esc(date)}</td><td><strong>${esc(project)}</strong><small>${r.valid ? (entry.state.mode === 'volume' ? `Обычные диски: ${volumeText(r.targetTB/.95)} · RAID: ${volumeText(r.targetTB/.993)}` : `${nf(r.totalCount,0)} × ${nf(r.disk)} ТБ`) : 'Настройки сохранены'}</small></td><td>${cameras}</td><td>${esc(mode)}</td><td><strong>${calculated}</strong></td><td><div class="history-actions"><button type="button" data-history-open="${esc(entry.id)}" aria-label="Загрузить расчёт">Открыть</button><button type="button" data-history-delete="${esc(entry.id)}" class="history-delete" aria-label="Удалить расчёт">Удалить</button></div></td></tr>`;
     }).join('');
+    if (smooth) {
+      const css = getComputedStyle(panel);
+      const nextHeight = $('history-body').getBoundingClientRect().height + parseFloat(css.paddingTop) + parseFloat(css.paddingBottom) + parseFloat(css.borderTopWidth) + parseFloat(css.borderBottomWidth);
+      panel.style.height = nextHeight + 'px';
+      const animation = panel.animate([{height:oldHeight + 'px'},{height:nextHeight + 'px'}], {duration:260,easing:'cubic-bezier(.2,.7,.2,1)'});
+      historyAnimation = animation;
+      animation.finished.then(() => {
+        if (historyAnimation !== animation) return;
+        panel.style.height = ''; panel.style.overflow = ''; historyAnimation = undefined;
+      }).catch(() => {});
+      $(savedCalculations.length ? 'history-scroll' : 'history-empty').animate([{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}], {duration:220,easing:'ease-out'});
+    }
   }
   function snapshotCurrent() {
     if (!result?.valid) { toast('Заполните параметры для сохранения'); return; }
@@ -1888,6 +1961,7 @@ load-card summary .load-caption{font-size:16px}
   function restoreSnapshot(id) {
     const found = savedCalculations.find(x => x.id === id);
     if (!found) return;
+    undoHistory = undefined;
     undoState = JSON.parse(JSON.stringify(state));
     state = sanitize(found.state);
     expandedGroups.clear(); collapsedGroups.clear(); clearHash();
@@ -1956,9 +2030,28 @@ load-card summary .load-caption{font-size:16px}
   });
   $('clear-history').addEventListener('click', () => {
     if (!savedCalculations.length) return;
-    if (!window.confirm('Удалить все сохранённые расчёты из истории этого браузера?')) return;
+    $('clear-history-count').textContent = historyCountText(savedCalculations.length);
+    $('clear-history-dialog').showModal();
+  });
+  for (const id of ['close-clear-history', 'cancel-clear-history']) {
+    $(id).addEventListener('click', () => $('clear-history-dialog').close());
+  }
+  $('clear-history-dialog').addEventListener('click', event => {
+    const dialog = $('clear-history-dialog');
+    if (event.target !== dialog) return;
+    const r = dialog.getBoundingClientRect();
+    if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close();
+  });
+  $('confirm-clear-history').addEventListener('click', () => {
+    $('clear-history-dialog').close();
+    if (!savedCalculations.length) return;
+    const previous = savedCalculations;
     savedCalculations = [];
-    persistHistory(); renderHistory(); toast('История очищена');
+    if (!persistHistory()) { savedCalculations = previous; return; }
+    undoState = undefined; undoHistory = previous;
+    renderHistory(true);
+    $('history-title').focus({preventScroll:true});
+    toast('История очищена', true);
   });
   $('copy-result').addEventListener('click', () => { if (result.valid) copyText(reportText(), 'Расчёт скопирован'); });
   $('share-result').addEventListener('click', () => {
