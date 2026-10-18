@@ -871,6 +871,11 @@ load-card summary .load-caption{font-size:16px}
             <div class="section-heading"><div class="heading-icon"><svg class="icon"><use href="#i-calendar"/></svg></div><div><h2 id="period-title">Срок хранения</h2><p id="period-description" hidden>Сколько дней хранить запись</p></div></div>
             <div id="period-volume" class="period-controls"><div class="days-control"><label class="sr-only" for="days">Срок хранения, дней</label><input id="days" data-setting="days" type="text" inputmode="numeric" value="30" maxlength="4"><span>дней</span></div><div class="presets" aria-label="Быстрый выбор срока"><button data-days="7">7</button><button data-days="14">14</button><button data-days="30" class="selected">30</button><button data-days="60">60</button><button data-days="90">90</button></div></div>
             <div id="period-retention" class="grid three" hidden><label class="field">Ёмкость установленного HDD<select id="retention-drive-size"><option value="1">1 ТБ</option><option value="2">2 ТБ</option><option value="4">4 ТБ</option><option value="6">6 ТБ</option><option value="8">8 ТБ</option><option value="10">10 ТБ</option><option value="12" selected>12 ТБ</option><option value="14">14 ТБ</option><option value="16">16 ТБ</option><option value="18">18 ТБ</option><option value="20">20 ТБ</option><option value="22">22 ТБ</option><option value="24">24 ТБ</option><option value="26">26 ТБ</option><option value="28">28 ТБ</option><option value="30">30 ТБ</option><option value="32">32 ТБ</option><option value="custom">Другая ёмкость</option></select></label><label class="field">Всего установлено дисков<div class="input-unit"><input id="driveCount" data-setting="driveCount" type="text" inputmode="numeric" value="4"><span>шт.</span></div></label><div class="capacity-preview"><span>Общая номинальная ёмкость</span><strong id="installed-preview">48 ТБ</strong></div></div>
+            <div id="retention-storage-options" class="grid two spaced" hidden>
+              <label class="field" id="retention-custom-drive-field" hidden>Ёмкость одного HDD<div class="input-unit"><input id="retention-custom-drive-size" data-setting="driveSize" type="text" inputmode="decimal" aria-describedby="error-driveSize"><span>ТБ</span></div><small>Укажите свою номинальную ёмкость</small></label>
+              <label class="field">Резерв файловой системы<div class="input-unit"><input id="retention-fs" data-setting="fs" type="text" inputmode="decimal" value="5" aria-describedby="retention-fs-hint error-fs"><span>%</span></div><small id="retention-fs-hint">5% для обычных дисков. Для сравнения с DSSL укажите 0%.</small></label>
+              <p class="field-error" id="error-driveSize"></p><p class="field-error" id="error-fs"></p>
+            </div>
             <div class="grid two period-options spaced">
               <label class="field"><span class="period-field-title">Запись в сутки</span><div class="input-unit"><input id="hours" data-setting="hours" type="text" inputmode="decimal" value="24" aria-describedby="hours-hint"><span>ч</span></div><small id="hours-hint">От 0 до 24 часов</small></label>
               <label class="field"><span class="period-field-title">Запас ёмкости</span><div class="input-unit"><input id="reserve" data-setting="reserve" type="text" inputmode="decimal" value="0"><span>%</span></div><small>На рост и пики потока</small></label>
@@ -1042,11 +1047,10 @@ load-card summary .load-caption{font-size:16px}
     const raw = 4096 * dimensions[0] * dimensions[1] / (1920 * 1080) * fps / 25 * codec * scene;
     return Math.max(64, Math.round(raw / 64) * 64);
   }
-  // Совместимость с привычным вводом: "4" = 4096 кбит/с, "4096" = 4096 кбит/с.
-  // Итоговое значение уже учитывает сцену: второй раз её не умножаем.
+  // Единица поля — кбит/с для всех значений, включая малые потоки.
+  // Итоговый битрейт уже учитывает сцену: второй раз её не умножаем.
   function bitrateKbps(g) {
-    const n = numeric(g.bitrate);
-    return Number.isFinite(n) && n > 0 && n < 64 ? n * 1024 : n;
+    return numeric(g.bitrate);
   }
   const raids = {
     none: { min: 1, title: 'Без RAID', description: 'Полная ёмкость дисков. Отказоустойчивости нет.' },
@@ -1070,7 +1074,7 @@ load-card summary .load-caption{font-size:16px}
   }
   function defaults() {
     return {
-      version: 9, project: '', mode: 'volume', days: '30', driveSize: '12', driveCount: '4', hddChoice:'', raid: 'none', raidEnabled: false,
+      version: 10, project: '', mode: 'volume', days: '30', driveSize: '12', driveCount: '4', hddChoice:'', raid: 'none', raidEnabled: false,
       hours: '24', reserve: '0', fs: '5', service: '0', spare: false, readLoad: '10',
       groups: [defaultGroup()]
     };
@@ -1221,7 +1225,7 @@ load-card summary .load-caption{font-size:16px}
     return { valid: true, errors, cameras, streamMbps, dailyTB, archiveTB, targetTB, groupResults,
       totalCount, activeCount, spare, disk, installedTB: totalCount * disk, raidTB: cap.tb,
       redundancyTB: activeCount * disk - cap.tb, fsTB: cap.tb * fs / 100, serviceTB: service,
-      availableTB, reserve, retentionDays, plannedDays, videoTB, plannedTB, requiredBeforeFsTB,
+      availableTB, reserve, fsPct: fs, retentionDays, plannedDays, videoTB, plannedTB, requiredBeforeFsTB,
       annualWriteTB, annualReadTB, annualLoadTB, mixedDays, warnings,
       raidType: effectiveRaid, raidActive: s.raidEnabled === true && effectiveRaid !== 'none',
       motion: s.groups.some(g => g.motion),
@@ -1247,7 +1251,7 @@ load-card summary .load-caption{font-size:16px}
     const m = n % 100, k = n % 10;
     return nf(n, 0) + ' ' + (m >= 11 && m <= 14 ? 'камер' : k === 1 ? 'камера' : k >= 2 && k <= 4 ? 'камеры' : 'камер');
   };
-  const volumeNumber = (tb, digits = 2) => nf(tb, tb > 0 && tb < .01 ? Math.min(6, Math.max(digits, Math.ceil(-Math.log10(tb)) + 1)) : digits);
+  const volumeNumber = (tb, digits = 2) => nf(tb, tb > 0 && tb < 1 ? Math.min(12, Math.max(digits, Math.ceil(-Math.log10(tb)) + 3)) : digits);
   const volumeText = (tb, digits = 2) => `${volumeNumber(tb, digits)} ТБ`;
   let state = {...C.defaults(), groups: []}, result, undoState, undoHistory, toastTimer, toastHideTimer, historyAnimation;
   let savedCalculations = []; // snapshots, never modified by live edits
@@ -1255,7 +1259,7 @@ load-card summary .load-caption{font-size:16px}
   const collapsedGroups = new Set();
 
   function sanitize(raw) {
-    if (!raw || ![1, 2, 3, 4, 5, 6, 7, 8, 9].includes(raw.version) || !Array.isArray(raw.groups) || (raw.groups.length === 0 && raw.version < 9) || raw.groups.length > 50) throw new Error('invalid configuration');
+    if (!raw || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(raw.version) || !Array.isArray(raw.groups) || (raw.groups.length === 0 && raw.version < 9) || raw.groups.length > 50) throw new Error('invalid configuration');
     const s = C.defaults();
     s.project = typeof raw.project === 'string' ? raw.project.slice(0,120) : '';
     for (const key of ['days', 'hours', 'driveSize', 'driveCount', 'reserve', 'fs', 'service', 'readLoad']) {
@@ -1286,6 +1290,13 @@ load-card summary .load-caption{font-size:16px}
         g.bitrate = (raw.version >= 4 || rawGroup.manual === true) && Number.isFinite(oldBase) && oldBase > 0
           ? String(Math.round(oldBase * 1024 * C.sceneFactor(g) * 1000) / 1000)
           : String(C.recommendedBitrateKbps(g));
+      }
+      // Версии 6–9 трактовали числа <64 как ×1024, хотя поле было в кбит/с.
+      // В старых ссылках и истории сохраняем прежний рассчитанный поток.
+      // Новый ввод (версия 10) всегда использует явную единицу поля.
+      if (raw.version >= 6 && raw.version < 10) {
+        const oldRate = C.numeric(g.bitrate);
+        if (Number.isFinite(oldRate) && oldRate > 0 && oldRate < 64) g.bitrate = String(oldRate * 1024);
       }
       if (!Number.isFinite(C.numeric(g.bitrate)) || C.numeric(g.bitrate) <= 0) {
         g.bitrate = String(C.recommendedBitrateKbps(g));
@@ -1389,7 +1400,10 @@ load-card summary .load-caption{font-size:16px}
       button.tabIndex = active ? 0 : -1;
     }
     $('raid-note').textContent = C.raids[state.raid].description;
-    $('retention-drive-size').value = standard ? state.driveSize : '12';
+    $('retention-drive-size').value = standard ? state.driveSize : 'custom';
+    $('retention-storage-options').hidden = state.mode !== 'retention';
+    $('retention-custom-drive-field').hidden = standard;
+    $('retention-custom-drive-size').value = state.driveSize;
     $('raid-summary').textContent = state.raidEnabled ? C.raids[state.raid].title + ' включён' : 'Выключен';
     $('raid-summary').classList.toggle('enabled', state.raidEnabled);
     $('raid-details').open = false;
@@ -1419,7 +1433,10 @@ load-card summary .load-caption{font-size:16px}
         p.textContent = label + ': ' + message;
         $('group-errors-' + id)?.appendChild(p);
       } else {
-        const control = key === 'driveSize' && !$('custom-drive-field').hidden ? $('customDriveSize') : $(key);
+        const control = key === 'driveSize' && state.mode === 'retention'
+          ? ($('retention-custom-drive-field').hidden ? $('retention-drive-size') : $('retention-custom-drive-size'))
+          : key === 'fs' && state.mode === 'retention' ? $('retention-fs')
+          : key === 'driveSize' && !$('custom-drive-field').hidden ? $('customDriveSize') : $(key);
         control?.setAttribute('aria-invalid', 'true');
         if ($('error-' + key)) $('error-' + key).textContent = message;
       }
@@ -1430,7 +1447,7 @@ load-card summary .load-caption{font-size:16px}
   function calculateForView(s) {
     // The volume mode estimates video storage only. Retention mode still uses
     // the installed HDD capacity supplied by the user; neither uses RAID.
-    return C.calculate({...s, raidEnabled:false, raid:'none', fs:'5', service:'0', spare:false,
+    return C.calculate({...s, raidEnabled:false, raid:'none', fs:s.mode === 'retention' ? s.fs : '5', service:'0', spare:false,
       ...(s.mode === 'volume' ? {driveSize:'32',preferredDriveCount:undefined} : {})});
   }
   function renderHddOptions(r) {
@@ -1526,8 +1543,10 @@ load-card summary .load-caption{font-size:16px}
     const value = $('result-number').parentElement;
     value.classList.toggle('small-number', primary.length > 7 && primary.length <= 10);
     value.classList.toggle('tiny-number', primary.length > 10);
-    $('result-sub').textContent = reverse ? '' : `С запасом ${nf(result.reserve)}%`;
-    $('result-sub').hidden = reverse || result.reserve === 0;
+    $('result-sub').textContent = reverse
+      ? `Резерв ФС ${nf(result.fsPct)}%${result.reserve ? ` · запас ёмкости ${nf(result.reserve)}%` : ''}`
+      : `С запасом ${nf(result.reserve)}%`;
+    $('result-sub').hidden = !reverse && result.reserve === 0;
     $('result-raid-control').classList.toggle('is-active', result.raidActive);
     $('result-raid-state').textContent = result.raidActive ? C.raids[result.raidType].title : 'Не используется';
     $('result-raid-note').textContent = result.raidActive ? 'Учтён в подборе HDD' : 'Расчёт без массива';
@@ -1549,7 +1568,7 @@ load-card summary .load-caption{font-size:16px}
     $('capacity-bar').setAttribute('aria-label', `Из ${volumeText(result.availableTB)}: видео ${volumeText(result.videoTB)}, запас ${volumeText(result.videoTB * result.reserve / 100)}, свободно ${volumeText(Math.max(0, result.availableTB - result.plannedTB))}`);
     $('metric-required-label').textContent = result.raidActive ? 'После RAID, до резервов' : 'Ёмкость HDD до резервов';
     $('metric-required').textContent = volumeText(result.raidTB);
-    const fsPct = C.numeric(state.fs);
+    const fsPct = result.fsPct;
     $('metric-fs-row').hidden = result.fsTB <= 0;
     $('metric-fs-label').textContent = `Резерв файловой системы (${nf(fsPct)}%)`;
     $('metric-fs').textContent = '−' + volumeText(result.fsTB);
@@ -1614,7 +1633,15 @@ load-card summary .load-caption{font-size:16px}
     $('raid-apply-error').textContent = '';
   });
   $('retention-drive-size').addEventListener('change', () => {
-    state.driveSize = $('retention-drive-size').value;
+    const selected = $('retention-drive-size').value;
+    $('retention-custom-drive-field').hidden = selected !== 'custom';
+    if (selected === 'custom') {
+      $('retention-custom-drive-size').value = state.driveSize;
+      $('retention-custom-drive-size').focus();
+      return;
+    }
+    state.driveSize = selected;
+    $('retention-custom-drive-size').value = selected;
     changed();
   });
   $('apply-raid').addEventListener('click', () => {
@@ -1980,7 +2007,8 @@ load-card summary .load-caption{font-size:16px}
       `Запас на рост: ${nf(result.reserve)}%`,
       `Объём видео с запасом: ${volumeText(result.plannedTB)}`);
     if (reverse) lines.push(`Установлено HDD: ${nf(result.totalCount,0)} × ${nf(result.disk)} ТБ`,
-      `Доступно при резерве файловой системы 5%: ${volumeText(result.availableTB)}`);
+      `Доступно при резерве файловой системы ${nf(result.fsPct)}%: ${volumeText(result.availableTB)}`,
+      `Расчётный срок: ${nf(result.retentionDays,4)} дня; основной результат округлён вниз до полного срока.`);
     else lines.push(`Обычные диски (5% служебный резерв): ${volumeText(result.targetTB / .95)}`,
       `Полезная ёмкость RAID (0,7% резерв): ${volumeText(result.targetTB / .993)}`,
       'Для RAID не учтены диски избыточности и горячий резерв.');
@@ -1992,7 +2020,7 @@ load-card summary .load-caption{font-size:16px}
     }
 
     if (result.warnings.length) lines.push('', 'ПРОВЕРЬТЕ: ' + result.warnings.join(' '));
-    lines.push('', 'Рекомендуемый битрейт: табличное значение для поддерживаемых сочетаний, приближённая оценка для остальных. Битрейт уже включает сцену, повторно не корректируется. Ввод 4 = 4096 кбит/с.',
+    lines.push('', 'Рекомендуемый битрейт: табличное значение для поддерживаемых сочетаний, приближённая оценка для остальных. Битрейт уже включает сцену, повторно не корректируется. Ручной ввод — строго в кбит/с: 32 = 32 кбит/с, 4096 = 4096 кбит/с.',
       '1 ТБ = 10¹² байт. Сеть: без транспортных накладных расходов.');
     return lines.join('\n');
   }
